@@ -25,7 +25,59 @@ yScale = d3.scaleLinear().range ([height, 0]);
 var g = svg.append("g")
        .attr("transform", "translate(" + 100 + "," + 100 + ")");
 
+d3.json(queryURL, function(error, data) {
 
+    console.log(data);
+
+    var countObj = {};
+
+    data.forEach(function(d){
+        var grade = d.grade;
+        if(countObj[grade] === undefined) {
+            countObj[grade] = 0;
+        } else {
+            countObj[grade] = countObj[grade] + 1;
+        }
+    })
+
+    console.log(countObj);
+
+    data.forEach(function(d){
+        var grade = d.value;
+        d.count = countObj[grade];
+    })
+
+if (error) {
+    throw error;
+}
+
+xScale.domain(data.map(function(d){ return d.grade}));
+yScale.domain([0, d3.max(data, function(d) { return d.count; })]);
+
+g.append("g")
+    .attr("transform", "translate(0," + height + ")")
+    .call(d3.axisBottom(xScale));
+
+g.append("g")
+    .call(d3.axisLeft(yScale).tickFormat(function(d){
+        return d;
+    }).ticks(6))
+    .append("text")
+    .attr("y", 6)
+    .attr("dy", "0.71em")
+    .attr("text-anchor", "end")
+    .text("value");
+
+    g.selectAll(".bar")
+    .data(data)
+    .enter().append("rect")
+    .attr("class", "bar")
+    .attr("x", function(d) { return xScale(d.grade); })
+    .attr("y",  d => yScale(d.count))
+    .attr("width", xScale.bandwidth())
+    .attr("height", function(d) { return height - yScale(d.count); });
+
+});
 
 
 function createMarkers(response){
@@ -49,10 +101,7 @@ function createMarkers(response){
         var [long] = longitude;
 
         var marker = L.marker([parseFloat(lat), parseFloat(long)]).addTo(mymap).bindTooltip(response[i].dba)
-        
     }
-
-    
 }
 
 
